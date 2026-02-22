@@ -13,6 +13,9 @@
 #define NUM_LEDS 16
 #define TPSENSOR1_PIN 14
 
+String chipID;
+String deviceName;
+
 Button2 tpsensor1;
 
 #include <FastLED.h> // For LED control
@@ -22,9 +25,26 @@ Button2 tpsensor1;
 void WM_setup();
 void tpSensor1();
 
+
+
+
+String getWMChipID() {
+    String mac = WiFi.macAddress();   // "AA:BB:CC:DD:EE:FF"
+
+    mac.replace(":", "");             // "AABBCCDDEEFF"
+    mac.toLowerCase();                // match WM format
+
+    return mac.substring(4);          // last 8 hex chars
+}
+
+WiFiManager wm;   // declare GLOBALLY for on-demand use
+
+
 void setup() {
 
   Serial.begin(115200);
+  chipID = getWMChipID();
+  deviceName = "ExoPing_" + chipID;
 
   tpsensor1.begin(TPSENSOR1_PIN, INPUT_PULLDOWN, false);
   tpSensor1();
@@ -44,20 +64,10 @@ void loop() {
 
 
 void WM_setup() {
-  
-  WiFiManager wm;
-  wm.setClass("invert");
-  // wm.resetSettings();
+  wm.setEnableConfigPortal(false);
+  bool connected = wm.autoConnect("MyDevice");
+  if (!connected) Serial.println("No saved credentials — press button to configure");
 
-  bool connected = wm.autoConnect("ExoPingAP", "password123"); //Future refactor: Make AP name based on chip ID.
-
-  if (!connected) {
-    Serial.println("Failed to connect to WiFi. Restarting...");
-    delay(3000);
-    ESP.restart();
-  }
-
-  Serial.println("Connected to WiFi! IP Address: " + WiFi.localIP().toString());
 }
 
 
@@ -75,10 +85,13 @@ void tpSensor1() {
   //Handle button long click event for tpsensor1
   tpsensor1.setLongClickHandler([](Button2& b) {
     
-    Serial.println("Resetting WiFi settings...");
-    WiFiManager wm;
-    wm.resetSettings();
-    ESP.restart();
+    Serial.println("Opening WiFi config portal...");
+    wm.setClass("invert");
+    wm.setConfigPortalTimeout(120);
+ 
+    wm.startConfigPortal(deviceName.c_str(), "password123");
+    Serial.println("WiFi Portal has been closed!");
+    
   });
 
   //Handle button double click event for tpsensor1
