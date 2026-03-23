@@ -1,8 +1,15 @@
+#include "secrets.h"
 
 // Constants
 #define LED_PIN 13
 #define NUM_LEDS 16
 const int TPSENSOR1_PIN = 14;
+
+const float fwversion = 0.1; //Firmware version device.
+#define devicefnName "ExoPing" //Friendly name. //Todo: Allow user to set this in config portal and save in SPIFFS or EEPROM.
+int devicecurrentmode = 0; //Current mode of the device, used for MQTT state reporting. Todo: Implement this to accualy change in code.
+#define charging true; //Charging state of the device, used for MQTT state reporting. Todo: Implement this to accualy change in code.
+int battery = 100; //Battery level of the device, used for MQTT state reporting. Todo: Implement this to accualy change in code.
 
 // Libraries
 #include <Arduino.h>
@@ -11,6 +18,8 @@ const int TPSENSOR1_PIN = 14;
 #include <FastLED.h>
 #include "Button2.h"
 #include "lighthandler.h"
+#include "PubSubClient.h"
+#include "ArduinoJson.h"
 
 // Global variables
 String chipID;
